@@ -24,9 +24,9 @@ module React
       @@pool = ConnectionPool.new(default_pool_options.merge(args)) { self.new }
     end
 
-    def self.render(component, args={})
+    def self.render(component, args={}, server_js=nil)
       @@pool.with do |renderer|
-        renderer.render(component, args)
+        renderer.render(component, args, server_js)
       end
     end
 
@@ -42,10 +42,11 @@ module React
       @context ||= ExecJS.compile(self.class.combined_js)
     end
 
-    def render(component, args={})
+    def render(component, args={}, server_js=nil)
       react_props = React::Renderer.react_props(args)
       jscode = <<-JS
         (function () {
+          #{server_js}
           var result = React.renderToString(React.createElement(#{component}, #{react_props}));
           #{@@replay_console ? React::Console.replay_as_script_js : ''}
           return result;
